@@ -93,7 +93,7 @@ app.post('/uploadData',function(req,res){
                                           console.log('Could not add Attachment:', error);
                                         }
                                         else {
-                                          res.end('Data is uploaded');
+                                          res.end('Data was uploaded');
                                           console.log('Added attachment');
                                         }
                                     });
@@ -111,10 +111,6 @@ app.post('/uploadData',function(req,res){
             });
           }
         });
-
-
-
-
       }
     });
 });
