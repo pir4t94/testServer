@@ -1,6 +1,6 @@
 var devAPIkey = '16f98e5f54b6e819539ad91482c1c21a';
 var token = 'e48c599c01f977f97d3b9e9726e15b7302cfc9c4f01cf75a13724198cd61457c';
-var orgID = 'testteam48951598'
+var teamID = 'testteam48951598'
 
 var express = require('express');
 var app = express();
@@ -35,6 +35,7 @@ var storage =   multer.diskStorage({
 var upload = multer({ storage : storage}).array('uFile',8)//.single('uFile');
 
 app.get('/', function(req, res) {
+  if("Android".includes("Android M(6.0)".split(' ')[0]))
   res.send("Hello");
 });
 
@@ -52,7 +53,7 @@ app.post('/uploadData',function(req,res){
         var os = req.body.os;
         var device = req.body.device;
         var time = req.body.time;
-        var desc = req.body.description;
+        var desc = req.body.desc;
 
         var cardName = 'Bug Reporter';
         var description = 'User: ' + user + '\nOS: ' + os + '\nDevice: ' + device + '\nTime: ' + time + '\n\n' + desc;
@@ -72,9 +73,10 @@ app.post('/uploadData',function(req,res){
                     console.log('Could not get lists', error);
                     return res.end("Could not get lists");
                   }else{
+                    var listID;
                     tLists.forEach(list => {
                       if(list.name.includes(os.split(' ')[0])){
-                        var listID = list.id;
+                        listID = list.id;
                         trello.addCard(cardName, description, listID,
                             function (error, trelloCard) {
                                 if (error) {
@@ -98,10 +100,11 @@ app.post('/uploadData',function(req,res){
                                   });
                                }
                           });
-                      }else{
-                        return res.end('Could not find list')
                       }
                     });
+                    if(listID==null){
+                      res.end('Could not find list');
+                    }
                   }
                 });
               }
