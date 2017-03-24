@@ -6,6 +6,7 @@ var multer = require('multer');
 var fs = require('fs');
 var bodyParser = require('body-parser')
 
+var port=Number(process.env.PORT || 3000);
 
 app.use(bodyParser.urlencoded({
     extended: true
@@ -168,6 +169,6 @@ app.get('/uploadData', function(req, res) {
 });
 */
 
-app.listen(1337, function () {
-  console.log('Listening on port 1337!')
+app.listen(port, function () {
+  console.log('Listening on port ' + port + '!')
 });
