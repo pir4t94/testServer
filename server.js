@@ -11,6 +11,7 @@ var fs = require('fs');
 var bodyParser = require('body-parser')
 
 var port=Number(process.env.PORT || 3000);
+var date = new Date();
 
 app.use(bodyParser.urlencoded({
     extended: true
@@ -18,7 +19,6 @@ app.use(bodyParser.urlencoded({
 
 app.use(bodyParser.json());
 
-var st;
 
 app.use('/uploads', express.static(__dirname + '/uploads'));
 
@@ -27,26 +27,29 @@ var storage =   multer.diskStorage({
     callback(null, './uploads');
   },
   filename: function (req, file, callback) {
-    var date = new Date();
-    callback(null,date.getFullYear() + '-' + date.getMonth() + '-' + date.getDate() + '-' + date.getHours() + '-' + date.getMinutes() + '-' + date.getSeconds() + '-' + date.getMilliseconds() + '.' + file.originalname.split(".")[file.originalname.split(".").length-1]);
+    var fileName = date.getFullYear() + '-' + date.getMonth() + '-' + date.getDate() + '-' + date.getHours() + '-' + date.getMinutes() + '-' + date.getSeconds() + '-' + date.getMilliseconds() + '.' + file.originalname.split(".")[file.originalname.split(".").length-1];
+    while(fs.existsSync('uploads/'+fileName)) {
+      console.log("File exists!\nCreating new name...");
+      date = new Date();
+      fileName = date.getFullYear() + '-' + date.getMonth() + '-' + date.getDate() + '-' + date.getHours() + '-' + date.getMinutes() + '-' + date.getSeconds() + '-' + date.getMilliseconds() + '.' + file.originalname.split(".")[file.originalname.split(".").length-1];
+    }
+    callback(null,fileName);
   }
 });
 
 var upload = multer({ storage : storage}).array('uFile',8)//.single('uFile');
 
 app.get('/', function(req, res) {
-  if("Android".includes("Android M(6.0)".split(' ')[0]))
   res.send("Hello");
 });
 
 app.post('/uploadData',function(req,res){
-  st = 0;
   console.log('Uploading...');
+  date = new Date();
   upload(req,res,function(error) {
       if(error) {
         return res.end('Error uploading data');
       }else {
-        st = req.files.length;
 
         var name = req.body.name;
         var user = req.body.user;
@@ -104,6 +107,7 @@ app.post('/uploadData',function(req,res){
                     });
                     if(listID==null){
                       res.end('Could not find list');
+                      console.log('Could not find list');
                     }
                   }
                 });
@@ -114,92 +118,6 @@ app.post('/uploadData',function(req,res){
       }
     });
 });
-
-
-app.get('/test', function(req, res) {
-  var name = req.query.name;
-  trello.getOrgBoards(teamID, function(error, tBoards){
-    if(error){
-      console.log('Couldn\'t find board', error);
-    }else{
-      tBoards.forEach(board => {
-        if(board.name == name){
-          var boardId = board.id;
-          trello.getListsOnBoard(boardId, function(error, tLists){
-            tLists.forEach(list => {
-              if(list.name == 'Android'){
-                var listId = list.id;
-                trello.addCard('TestTitle', 'TestDesc', listId,
-                      function (error, trelloCard) {
-                        if (error) {
-                          return res.end("Could not add card");
-                          console.log('Could not add card:', error);
-                        }
-                        else {
-                          console.log('Added card:', trelloCard);
-                        }
-                      });
-              }else{
-
-              }
-            });
-          });
-        }
-      });
-    }
-  });
-});
-
-
-/*
-app.post('/uploadFile',function(req,res){
-  st = 0;
-  upload(req,res,function(err) {
-      if(err) {
-          return res.end("Error uploading file.");
-      }
-      res.end("File is uploaded");
-      st = req.files.length;
-      console.log("Uploaded " + st + " files");
-    });
-});
-
-app.get('/uploadData', function(req, res) {
-  var user = req.query.user;
-  var os = req.query.os;
-  var device = req.query.device;
-  var time = req.query.time;
-
-  var listID = '58cf9b623125accaf1429829';
-  var cardName = "BugReporter";
-  var description = "User: " + user + "\nOS: " + os + "\nDevice: " + device + "\nTime: " + time;
-
-  trello.addCard(cardName, description, listID,
-      function (error, trelloCard) {
-          if (error) {
-              console.log('Could not add card:', error);
-          }
-          else {
-            console.log('Added card:', trelloCard);
-            const filesFolder = './uploads/';
-            fs.readdir(filesFolder, (err, files) => {
-              //files.forEach(file => {
-              for(var i = files.length-1; i > files.length-1 - st; i--){
-                trello.addAttachmentToCard(trelloCard.id, req.protocol + '://' + req.get('host') + "/uploads/" + files[i], function (error, trelloCard) {
-                    if (error) {
-                        console.log('Could not add Attachment:', error);
-                    }
-                    else {
-                        console.log('Added attachment');
-                    }
-                });
-              }
-            });
-            res.end("Attachments was added");
-         }
-    });
-});
-*/
 
 app.listen(port, function () {
   console.log('Listening on port ' + port + '!')
