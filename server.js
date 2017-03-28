@@ -96,10 +96,6 @@ app.post('/uploadData',function(req,res){
                                           console.log('Could not add Attachment:', error);
                                         }
                                         else {
-                                          //trello.updateAttachment(trelloCard.id, attachment.id);
-                                          console.log(trelloCard);
-                                          console.log(attachment);
-                                          res.end('Data was uploaded');
                                           console.log('Added attachment');
                                         }
                                     });
@@ -110,6 +106,7 @@ app.post('/uploadData',function(req,res){
                                       console.log('Could not set cover');
                                     }
                                   });
+                                  res.end('Data was uploaded');
                                }
                           });
                       }
