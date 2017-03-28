@@ -90,16 +90,25 @@ app.post('/uploadData',function(req,res){
                                   console.log('Added card:', trelloCard);
                                   const filesFolder = './uploads/';
                                   files.forEach( file => {
-                                    trello.addAttachmentToCard(trelloCard.id, req.protocol + '://' + req.get('host') + '/uploads/' + file.filename, function (error, trelloCard) {
+                                    trello.addAttachmentToCard(trelloCard.id, req.protocol + '://' + req.get('host') + '/uploads/' + file.filename, function (error, attachment) {
                                         if (error) {
                                           return res.end('Could not add card');
                                           console.log('Could not add Attachment:', error);
                                         }
                                         else {
+                                          //trello.updateAttachment(trelloCard.id, attachment.id);
+                                          console.log(trelloCard);
+                                          console.log(attachment);
                                           res.end('Data was uploaded');
                                           console.log('Added attachment');
                                         }
                                     });
+                                  });
+                                  trello.updateCard(trelloCard.id, "idAttachmentCover","",function(error, card){
+                                    if(error){
+                                      res.end('Could not set cover');
+                                      console.log('Could not set cover');
+                                    }
                                   });
                                }
                           });
