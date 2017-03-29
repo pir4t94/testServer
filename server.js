@@ -52,14 +52,13 @@ app.post('/uploadData',function(req,res){
       }else {
 
         var name = req.body.name;
-        var user = req.body.user;
         var os = req.body.os;
         var device = req.body.device;
         var time = req.body.time;
         var desc = req.body.desc;
 
         var cardName = 'Bug Reporter';
-        var description = 'User: ' + user + '\nOS: ' + os + '\nDevice: ' + device + '\nTime: ' + time + '\n\n' + desc;
+        var description = 'OS: ' + os + '\nDevice: ' + device + '\nTime: ' + time + '\n\n' + desc;
 
         var files = req.files;
 
