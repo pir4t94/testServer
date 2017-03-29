@@ -27,6 +27,7 @@ var storage =   multer.diskStorage({
     callback(null, './uploads');
   },
   filename: function (req, file, callback) {
+    date = new Date();
     var fileName = date.getFullYear() + '-' + date.getMonth() + '-' + date.getDate() + '-' + date.getHours() + '-' + date.getMinutes() + '-' + date.getSeconds() + '-' + date.getMilliseconds() + '.' + file.originalname.split(".")[file.originalname.split(".").length-1];
     while(fs.existsSync('uploads/'+fileName)) {
       console.log("File exists!\nCreating new name...");
@@ -45,7 +46,6 @@ app.get('/', function(req, res) {
 
 app.post('/uploadData',function(req,res){
   console.log('Uploading...');
-  date = new Date();
   upload(req,res,function(error) {
       if(error) {
         return res.end('Error uploading data');
