@@ -1,6 +1,6 @@
 var devAPIkey = '16f98e5f54b6e819539ad91482c1c21a';
 var token = 'e48c599c01f977f97d3b9e9726e15b7302cfc9c4f01cf75a13724198cd61457c';
-var teamID = 'testteam48951598'
+var teamID = 'testteam48951598';
 
 var express = require('express');
 var app = express();
@@ -8,7 +8,7 @@ var Trello = require('trello');
 var trello = new Trello(devAPIkey, token);
 var multer = require('multer');
 var fs = require('fs');
-var bodyParser = require('body-parser')
+var bodyParser = require('body-parser');
 
 var port=Number(process.env.PORT || 3000);
 var date = new Date();
@@ -44,6 +44,11 @@ app.get('/', function(req, res) {
   res.send("Hello");
 });
 
+app.get('/getToken', function(req, res) {
+  console.log(req.query.token);
+  res.send(req.query.token);
+});
+
 app.post('/uploadData',function(req,res){
   console.log('Uploading...');
   upload(req,res,function(error) {
@@ -77,7 +82,7 @@ app.post('/uploadData',function(req,res){
                   }else{
                     var listID;
                     tLists.forEach(list => {
-                      if(list.name.includes(os.split(' ')[0])){
+                      if(list.name.includes('Sprint')){
                         listID = list.id;
                         trello.addCard(cardName, description, listID,
                             function (error, trelloCard) {
