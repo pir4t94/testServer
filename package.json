@@ -20,5 +20,13 @@
     "server"
   ],
   "author": "Rok",
-  "license": "ISC"
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pir4t94/testServer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/pir4t94/testServer/issues"
+  },
+  "homepage": "https://github.com/pir4t94/testServer#readme"
 }

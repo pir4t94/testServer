@@ -1,14 +1,14 @@
 var devAPIkey = '16f98e5f54b6e819539ad91482c1c21a';
-var token = 'e48c599c01f977f97d3b9e9726e15b7302cfc9c4f01cf75a13724198cd61457c';
+//var token = 'e48c599c01f977f97d3b9e9726e15b7302cfc9c4f01cf75a13724198cd61457c';
 var teamID = 'testteam48951598';
 
 var express = require('express');
 var app = express();
 var Trello = require('trello');
-var trello = new Trello(devAPIkey, token);
 var multer = require('multer');
 var fs = require('fs');
 var bodyParser = require('body-parser');
+//var headlessAuth = require('headless-trello-auth');
 
 var port=Number(process.env.PORT || 3000);
 var date = new Date();
@@ -45,8 +45,7 @@ app.get('/', function(req, res) {
 });
 
 app.get('/getToken', function(req, res) {
-  console.log(req.query.token);
-  res.send(req.query.token);
+
 });
 
 app.post('/uploadData',function(req,res){
@@ -56,73 +55,84 @@ app.post('/uploadData',function(req,res){
         return res.end('Error uploading data');
       }else {
 
-        var name = req.body.name;
+        var token = req.body.token;
+        var boardName = req.body.boardName;
+        var listName = req.body.listName;
         var os = req.body.os;
         var device = req.body.device;
         var time = req.body.time;
         var desc = req.body.desc;
+
+        var trello = new Trello(devAPIkey, token);
 
         var cardName = 'Bug Reporter';
         var description = 'OS: ' + os + '\nDevice: ' + device + '\nTime: ' + time + '\n\n' + desc;
 
         var files = req.files;
 
-        trello.getOrgBoards(teamID, function(error, tBoards){
+        trello.getBoards('me', function(error, boards){
           if(error){
-            console.log('Could not find board', error);
-            return res.end("Could not find board");
+            console.log('Could not get boards', error);
+            return res.end('Could not get boards');
           }else{
-            tBoards.forEach(board => {
-              if(board.name == name){
-                var boardID = board.id;
-                trello.getListsOnBoard(boardID, function(error, tLists){
-                  if(error){
-                    console.log('Could not get lists', error);
-                    return res.end("Could not get lists");
-                  }else{
-                    var listID;
-                    tLists.forEach(list => {
-                      if(list.name.includes('Sprint')){
-                        listID = list.id;
-                        trello.addCard(cardName, description, listID,
-                            function (error, trelloCard) {
-                                if (error) {
-                                  console.log('Could not add card:', error);
-                                  return res.end("Could not add card");
-                                }
-                                else {
-                                  console.log('Added card:', trelloCard);
-                                  const filesFolder = './uploads/';
-                                  files.forEach( file => {
-                                    trello.addAttachmentToCard(trelloCard.id, req.protocol + '://' + req.get('host') + '/uploads/' + file.filename, function (error, attachment) {
-                                        if (error) {
-                                          return res.end('Could not add card');
-                                          console.log('Could not add Attachment:', error);
-                                        }
-                                        else {
-                                          console.log('Added attachment');
-                                        }
-                                    });
-                                  });
-                                  trello.updateCard(trelloCard.id, "idAttachmentCover","",function(error, card){
-                                    if(error){
-                                      res.end('Could not set cover');
-                                      console.log('Could not set cover');
-                                    }
-                                  });
-                                  res.end('Data was uploaded');
-                               }
-                          });
-                      }
-                    });
-                    if(listID==null){
-                      res.end('Could not find list');
-                      console.log('Could not find list');
-                    }
-                  }
-                });
-              }
+            var boardId = '';
+
+            boards.forEach(board => {
+              if(board.name == boardName)
+                boardId = board.id
             });
+
+            if(boardId != ''){
+              trello.getListsOnBoard(boardId, function(error, lists){
+                if(error){
+                  console.log('Could not get lists', error);
+                  return res.end('Could not get lists');
+                }else{
+                  var listId = '';
+                  lists.forEach(list => {
+                    if(list.name == listName)
+                      listId = list.id;
+                  });
+
+                  if(listId != ''){
+                    trello.addCard(cardName, description, listId,
+                        function (error, trelloCard) {
+                            if (error) {
+                              console.log('Could not add card', error);
+                              return res.end('Could not add card');
+                            }
+                            else {
+                              const filesFolder = './uploads/';
+                              files.forEach( file => {
+                                trello.addAttachmentToCard(trelloCard.id, req.protocol + '://' + req.get('host') + '/uploads/' + file.filename, function (error, attachment) {
+                                    if (error) {
+                                      return res.end('Could not add attachment');
+                                      console.log('Could not add attachment', error);
+                                    }
+                                });
+                              });
+
+                              trello.updateCard(trelloCard.id, "idAttachmentCover","",function(error, card){
+                                if(error){
+                                  res.end('Could not set cover');
+                                  console.log('Could not set cover');
+                                }else{
+                                  res.end('Data was uploaded!');
+                                  console.log('Data was uploaded!');
+                                }
+                              });
+                            }
+                          });
+                  }else{
+                    console.log('Could not find list', error);
+                    return res.end('Could not find list');
+                  }
+                }
+              });
+            }else{
+              console.log('Could not find board', error);
+              return res.end('Could not find board');
+            }
           }
         });
       }
