@@ -145,45 +145,71 @@ app.get('/getBoards',function(req,res){
   var token = req.query.token;
 
   if(token == null)
-    return res.end("No token");
+    return res.end('No token');
 
   var trello = new Trello(devAPIkey, token);
 
-  var arrayBoards = [];
-  var ended = false;
+  var resultArray = [];
+  var st = 0;
 
-  trello.getBoards('me', function(error, boards){
-    if(error){
-      console.log('Could not get boards', error);
-      return res.end('Could not get boards');
-    }else{
-      var st = 0;
-      var lastBoardId = boards[boards.length-1].id;
-      boards.forEach(board => {
-
-        trello.getListsOnBoard(board.id, function(error, lists){
-          if(error){
-            console.log('Could not get lists', error);
-            return res.end('Could not get lists');
-          }else{
-            var b = {
-              id: board.id,
-              name: board.name,
-              lists: lists
-            };
-            arrayBoards.push(b);
-            console.log(lists);
-            if(lastBoardId == board.id){
-              res.writeHead(200, {"Content-Type": "application/json"});
-              var json = JSON.stringify(arrayBoards);
-              res.end(json);
-            }
+  trello.makeRequest('get','/1/members/me',{boards: 'all', board_lists: 'all', cards: 'all'}).then((result) =>{
+    var boards = result.boards;
+    boards.forEach(board => {
+      var b = {
+        id: board.id,
+        name: board.name,
+        lists: []
+      }
+      var lists = board.lists;
+      st += lists.length;
+      lists.forEach(list => {
+        var l = {
+          id: list.id,
+          name: list.name,
+          boardId: list.idBoard,
+          cards: []
+        }
+        trello.makeRequest('get','/1/lists/' + l.id + '/cards',{fields: 'name,idBoard,idList'}).then((cards) =>{
+          st--;
+          l.cards = cards;
+          if(st==0){
+            res.writeHead(200, {"Content-Type": "application/json"});
+            res.end(JSON.stringify(resultArray));
           }
         });
+        b.lists.push(l);
       });
-    }
+      resultArray.push(b);
+    });
   });
 });
+
+app.get('/getCards',function(req, res){
+  console.log('Getting boards...');
+
+  var token = req.query.token;
+
+  if(token == null)
+    return res.end('No token');
+
+  var trello = new Trello(devAPIkey, token);
+
+  var resultArray = [];
+});
+
+/*var cards = result.cards;
+cards.forEach(card => {
+  if(l.id == card.idList){
+    console.log(card.name);
+    var c = {
+      id: card.id,
+      name: card.name,
+      listId: card.idList,
+      boardId: card.idBoard
+    }
+    l.cards.push(c);
+  }
+});*/
 
 app.listen(port, function () {
   console.log('Listening on port ' + port + '!')
