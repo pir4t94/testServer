@@ -139,6 +139,52 @@ app.post('/uploadData',function(req,res){
     });
 });
 
+app.get('/getBoards',function(req,res){
+  console.log('Getting boards...');
+
+  var token = req.query.token;
+
+  if(token == null)
+    return res.end("No token");
+
+  var trello = new Trello(devAPIkey, token);
+
+  var arrayBoards = [];
+  var ended = false;
+
+  trello.getBoards('me', function(error, boards){
+    if(error){
+      console.log('Could not get boards', error);
+      return res.end('Could not get boards');
+    }else{
+      var st = 0;
+      var lastBoardId = boards[boards.length-1].id;
+      boards.forEach(board => {
+
+        trello.getListsOnBoard(board.id, function(error, lists){
+          if(error){
+            console.log('Could not get lists', error);
+            return res.end('Could not get lists');
+          }else{
+            var b = {
+              id: board.id,
+              name: board.name,
+              lists: lists
+            };
+            arrayBoards.push(b);
+            console.log(lists);
+            if(lastBoardId == board.id){
+              res.writeHead(200, {"Content-Type": "application/json"});
+              var json = JSON.stringify(arrayBoards);
+              res.end(json);
+            }
+          }
+        });
+      });
+    }
+  });
+});
+
 app.listen(port, function () {
   console.log('Listening on port ' + port + '!')
 });
