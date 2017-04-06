@@ -126,7 +126,7 @@ app.post('/uploadData',function(req,res){
                               }
                             });
                     }else{
-                      trello.updateCardDescription(cardName, desc, function(error, trelloCard){
+                      trello.updateCardDescription(cardName, description, function(error, trelloCard){
                         if(error){
                           console.log('Could not update card\'s description', error);
                           return res.end('Could not update card\'s description');
