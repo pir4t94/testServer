@@ -199,7 +199,7 @@ app.get('/getBoards',function(req,res){
           boardId: list.idBoard,
           cards: []
         }
-        trello.makeRequest('get','/1/lists/' + l.id + '/cards',{fields: 'name,idBoard,idList'}).then((cards) =>{
+        trello.makeRequest('get','/1/lists/' + l.id + '/cards',{fields: 'name,desc,idBoard,idList'}).then((cards) =>{
           st--;
           l.cards = cards;
           if(st==0){
