@@ -18,7 +18,6 @@ app.use(bodyParser.urlencoded({
 
 app.use(bodyParser.json());
 
-
 app.use('/uploads', express.static(__dirname + '/uploads'));
 
 var storage =   multer.diskStorage({
@@ -43,10 +42,6 @@ app.get('/', function(req, res) {
   res.send("Hello");
 });
 
-app.get('/getToken', function(req, res) {
-
-});
-
 app.post('/uploadData',function(req,res){
   console.log('Uploading...');
   upload(req,res,function(error) {
@@ -66,7 +61,6 @@ app.post('/uploadData',function(req,res){
 
         var trello = new Trello(devAPIkey, token);
 
-        //cardName = 'Bug Reporter';
         var description = 'OS: ' + os + '\nDevice: ' + device + '\nTime: ' + time + '\n\n' + desc;
 
         var files = req.files;
@@ -151,8 +145,6 @@ app.post('/uploadData',function(req,res){
                         }
                       });
                     }
-
-                    /**/
                   }else{
                     console.log('Could not find list', error);
                     return res.end('Could not find list');
@@ -232,20 +224,6 @@ app.get('/getCards',function(req, res){
 
   var resultArray = [];
 });
-
-/*var cards = result.cards;
-cards.forEach(card => {
-  if(l.id == card.idList){
-    console.log(card.name);
-    var c = {
-      id: card.id,
-      name: card.name,
-      listId: card.idList,
-      boardId: card.idBoard
-    }
-    l.cards.push(c);
-  }
-});*/
 
 app.listen(port, function () {
   console.log('Listening on port ' + port + '!')
