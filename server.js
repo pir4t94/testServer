@@ -12,11 +12,10 @@ var bodyParser = require('body-parser');
 var port=Number(process.env.PORT || 3000);
 var date = new Date();
 
+app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
     extended: true
 }));
-
-app.use(bodyParser.json());
 
 app.use('/uploads', express.static(__dirname + '/uploads'));
 
@@ -98,7 +97,6 @@ app.post('/uploadData',function(req,res){
                                 return res.end('Could not add card');
                               }
                               else {
-                                const filesFolder = './uploads/';
                                 files.forEach( file => {
                                   trello.addAttachmentToCard(trelloCard.id, req.protocol + '://' + req.get('host') + '/uploads/' + file.filename, function (error, attachment) {
                                       if (error) {
@@ -161,6 +159,20 @@ app.post('/uploadData',function(req,res){
     });
 });
 
+app.post('/uploadComment',function(req, res){
+  var token = req.body.token;
+  var cardId = req.body.cardId;
+  var comment = req.body.comment;
+
+  if(token == null)
+    return res.end('No token');
+
+  var trello = new Trello(devAPIkey, token);
+  trello.addCommentToCard(cardId, comment, function(error, card){
+    return res.end("Comment was added!");
+  });
+});
+
 app.get('/getBoards',function(req,res){
   console.log('Getting boards...');
 
@@ -173,13 +185,51 @@ app.get('/getBoards',function(req,res){
 
   var resultArray = [];
 
-  trello.makeRequest('get','/1/members/me',{boards: 'all', board_lists: 'all', cards: 'all'}).then((result) =>{
-    var st = 0;
+  trello.makeRequest('get','/1/members/me',{boards: 'all', board_fields: 'name,memberships', board_memberships: 'all', board_lists: 'all', cards: 'all'}).then((result) =>{
+    var st = result.boards.length;
     var boards = result.boards;
+
     boards.forEach(board => {
+      trello.makeRequest('get','/1/boards/' + board.id,{fields: 'name', lists: 'all', list_fields: 'idBoard,name', cards: 'all', card_fields: 'name,desc,idBoard,idList', members: 'all', member_fields: 'username,fullName'}).then((board) =>{
+        var lists = board.lists;
+        var cards = board.cards;
+
+        var b = {
+          id: board.id,
+          name: board.name,
+          members: board.members,
+          lists: board.lists
+        }
+
+        cards.forEach(card => {
+          for(var i = 0; i < lists.length; i++){
+            if(!lists[i].hasOwnProperty('cards'))
+              lists[i].cards = [];
+            if(lists[i].id == card.idList)
+              lists[i].cards.push(card);
+          }
+        });
+
+        var b = {
+          id: board.id,
+          name: board.name,
+          members: board.members,
+          lists: lists
+        }
+
+        resultArray.push(b);
+        st--;
+        if(st==0){
+          res.writeHead(200, {'Content-Type': 'application/json; charset=utf-8'});
+          res.end(JSON.stringify(resultArray));
+        }
+      });
+    });
+    /*boards.forEach(board => {
       var b = {
         id: board.id,
         name: board.name,
+        members: board.memberships,
         lists: []
       }
       var lists = board.lists;
@@ -191,7 +241,7 @@ app.get('/getBoards',function(req,res){
           boardId: list.idBoard,
           cards: []
         }
-        trello.makeRequest('get','/1/lists/' + l.id + '/cards',{fields: 'name,desc,idBoard,idList'}).then((cards) =>{
+        trello.makeRequest('get','/1/lists/' + l.id + '/cards',{fields: 'name,desc,idBoard,idList', members: true, member_fields: 'username,fullName'}).then((cards) =>{
           st--;
           l.cards = cards;
           if(st==0){
@@ -205,24 +255,11 @@ app.get('/getBoards',function(req,res){
         b.lists.push(l);
       });
       resultArray.push(b);
-    });
+    });*/
   }).catch(function(){
     console.log('getBoards promise rejected!');
     res.end('[]');
   });
-});
-
-app.get('/getCards',function(req, res){
-  console.log('Getting boards...');
-
-  var token = req.query.token;
-
-  if(token == null)
-    return res.end('No token');
-
-  var trello = new Trello(devAPIkey, token);
-
-  var resultArray = [];
 });
 
 app.listen(port, function () {
