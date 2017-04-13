@@ -115,7 +115,7 @@ app.post('/uploadData',function(req,res){
                                 });
                                 if(desc == '')
                                   trello.addCommentToCard(trelloCard.id, comment, function(error, card){
-                                    console.log('Data was uploaded!');
+                                    console.log('Data was uploaded!desc:'+desc+'|');
                                     return res.end('Data was uploaded!');
                                   });
                               }
