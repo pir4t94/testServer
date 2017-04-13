@@ -57,6 +57,7 @@ app.post('/uploadData',function(req,res){
         var device = req.body.device;
         var time = req.body.time;
         var desc = req.body.desc;
+        var comment = req.body.comment;
 
         var trello = new Trello(devAPIkey, token);
 
@@ -115,33 +116,43 @@ app.post('/uploadData',function(req,res){
                                     console.log('Data was uploaded!');
                                   }
                                 });
+                                if(desc == '')
+                                  trello.addCommentToCard(cardId, comment, function(error, card){
+                                    return res.end("Comment was added!");
+                                  });
                               }
                             });
                     }else{
-                      trello.updateCardDescription(cardName, desc, function(error, trelloCard){
-                        if(error){
-                          console.log('Could not update card\'s description', error);
-                          return res.end('Could not update card\'s description');
-                        }else{
-                          files.forEach( file => {
-                            trello.addAttachmentToCard(trelloCard.id, req.protocol + '://' + req.get('host') + '/uploads/' + file.filename, function (error, attachment) {
-                                if (error) {
-                                  return res.end('Could not add attachment');
-                                  console.log('Could not add attachment', error);
-                                }
+                      if(desc == ''){
+                        trello.addCommentToCard(cardId, comment, function(error, card){
+                          return res.end("Comment was added!");
+                        });
+                      }else{
+                        trello.updateCardDescription(cardName, desc, function(error, trelloCard){
+                          if(error){
+                            console.log('Could not update card\'s description', error);
+                            return res.end('Could not update card\'s description');
+                          }else{
+                            files.forEach( file => {
+                              trello.addAttachmentToCard(trelloCard.id, req.protocol + '://' + req.get('host') + '/uploads/' + file.filename, function (error, attachment) {
+                                  if (error) {
+                                    return res.end('Could not add attachment');
+                                    console.log('Could not add attachment', error);
+                                  }
+                              });
                             });
-                          });
-                          trello.updateCard(trelloCard.id, "idAttachmentCover","",function(error, card){
-                            if(error){
-                              res.end('Could not set cover');
-                              console.log('Could not set cover');
-                            }else{
-                              res.end('Data was uploaded!');
-                              console.log('Data was uploaded!');
-                            }
-                          });
-                        }
-                      });
+                            trello.updateCard(trelloCard.id, "idAttachmentCover","",function(error, card){
+                              if(error){
+                                res.end('Could not set cover');
+                                console.log('Could not set cover');
+                              }else{
+                                res.end('Data was uploaded!');
+                                console.log('Data was uploaded!');
+                              }
+                            });
+                          }
+                        });
+                      }
                     }
                   }else{
                     console.log('Could not find list', error);
@@ -225,37 +236,6 @@ app.get('/getBoards',function(req,res){
         }
       });
     });
-    /*boards.forEach(board => {
-      var b = {
-        id: board.id,
-        name: board.name,
-        members: board.memberships,
-        lists: []
-      }
-      var lists = board.lists;
-      st += lists.length;
-      lists.forEach(list => {
-        var l = {
-          id: list.id,
-          name: list.name,
-          boardId: list.idBoard,
-          cards: []
-        }
-        trello.makeRequest('get','/1/lists/' + l.id + '/cards',{fields: 'name,desc,idBoard,idList', members: true, member_fields: 'username,fullName'}).then((cards) =>{
-          st--;
-          l.cards = cards;
-          if(st==0){
-            res.writeHead(200, {'Content-Type': 'application/json'});
-            res.end(JSON.stringify(resultArray));
-          }
-        }).catch(function(){
-          console.log('getCards promise rejected!');
-          res.end('[]');
-        });
-        b.lists.push(l);
-      });
-      resultArray.push(b);
-    });*/
   }).catch(function(){
     console.log('getBoards promise rejected!');
     res.end('[]');
@@ -265,3 +245,35 @@ app.get('/getBoards',function(req,res){
 app.listen(port, function () {
   console.log('Listening on port ' + port + '!')
 });
+
+/*boards.forEach(board => {
+  var b = {
+    id: board.id,
+    name: board.name,
+    members: board.memberships,
+    lists: []
+  }
+  var lists = board.lists;
+  st += lists.length;
+  lists.forEach(list => {
+    var l = {
+      id: list.id,
+      name: list.name,
+      boardId: list.idBoard,
+      cards: []
+    }
+    trello.makeRequest('get','/1/lists/' + l.id + '/cards',{fields: 'name,desc,idBoard,idList', members: true, member_fields: 'username,fullName'}).then((cards) =>{
+      st--;
+      l.cards = cards;
+      if(st==0){
+        res.writeHead(200, {'Content-Type': 'application/json'});
+        res.end(JSON.stringify(resultArray));
+      }
+    }).catch(function(){
+      console.log('getCards promise rejected!');
+      res.end('[]');
+    });
+    b.lists.push(l);
+  });
+  resultArray.push(b);
+});*/
