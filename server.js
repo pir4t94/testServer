@@ -115,15 +115,27 @@ app.post('/uploadData',function(req,res){
                                 });
                                 if(desc.length<1)
                                   trello.addCommentToCard(trelloCard.id, comment, function(error, card){
-                                    console.log('Data was uploaded!desc:'+desc+'|');
-                                    return res.end('Data was uploaded!');
+                                    if(error){
+                                      console.log(error);
+                                      return res.end('Error!');
+                                    }else{
+                                      console.log('Data was uploaded!');
+                                      return res.end('Data was uploaded!');
+                                    }
                                   });
                               }
                             });
                     }else{
-                      if(desc == ''){
-                        trello.addCommentToCard(cardId, comment, function(error, card){
+                      if(desc.length<1){
+                        trello.addCommentToCard(cardName, comment, function(error, card){
                           return res.end("Comment was added!");
+                        });
+                        files.forEach( file => {
+                          trello.addAttachmentToCard(cardName, req.protocol + '://' + req.get('host') + '/uploads/' + file.filename, function (error, attachment) {
+                              if (error) {
+                                console.log('Could not add attachment', error);
+                              }
+                          });
                         });
                       }else{
                         trello.updateCardDescription(cardName, desc, function(error, trelloCard){
