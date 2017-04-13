@@ -65,6 +65,8 @@ app.post('/uploadData',function(req,res){
 
         var files = req.files;
 
+        res.writeHead(500, {'Content-Type': 'text/plain; charset=utf-8'});
+
         trello.getBoards('me', function(error, boards){
           if(error){
             console.log('Could not get boards', error);
@@ -120,6 +122,7 @@ app.post('/uploadData',function(req,res){
                                       return res.end('Error!');
                                     }else{
                                       console.log('Data was uploaded!');
+                                      res.writeHead(200, {'Content-Type': 'text/plain; charset=utf-8'});
                                       return res.end('Data was uploaded!');
                                     }
                                   });
@@ -180,20 +183,6 @@ app.post('/uploadData',function(req,res){
     });
 });
 
-app.post('/uploadComment',function(req, res){
-  var token = req.body.token;
-  var cardId = req.body.cardId;
-  var comment = req.body.comment;
-
-  if(token == null)
-    return res.end('No token');
-
-  var trello = new Trello(devAPIkey, token);
-  trello.addCommentToCard(cardId, comment, function(error, card){
-    return res.end("Comment was added!");
-  });
-});
-
 app.get('/getBoards',function(req,res){
   console.log('Getting boards...');
 
@@ -205,6 +194,8 @@ app.get('/getBoards',function(req,res){
   var trello = new Trello(devAPIkey, token);
 
   var resultArray = [];
+
+  res.writeHead(500, {'Content-Type': 'application/json; charset=utf-8'});
 
   trello.makeRequest('get','/1/members/me',{boards: 'all', board_fields: 'name,memberships', board_memberships: 'all', board_lists: 'all', cards: 'all'}).then((result) =>{
     var st = result.boards.length;
