@@ -65,11 +65,10 @@ app.post('/uploadData',function(req,res){
 
         var files = req.files;
 
-        res.writeHead(500, {'Content-Type': 'text/plain; charset=utf-8'});
-
         trello.getBoards('me', function(error, boards){
           if(error){
             console.log('Could not get boards', error);
+            res.writeHead(500, {'Content-Type': 'text/plain'});
             return res.end('Could not get boards');
           }else{
             var boardId = '';
@@ -83,6 +82,7 @@ app.post('/uploadData',function(req,res){
               trello.getListsOnBoard(boardId, function(error, lists){
                 if(error){
                   console.log('Could not get lists', error);
+                  res.writeHead(500, {'Content-Type': 'text/plain'});
                   return res.end('Could not get lists');
                 }else{
                   var listId = '';
@@ -97,28 +97,32 @@ app.post('/uploadData',function(req,res){
                           function (error, trelloCard) {
                               if (error) {
                                 console.log('Could not add card', error);
+                                res.writeHead(500, {'Content-Type': 'text/plain'});
                                 return res.end('Could not add card');
                               }
                               else {
                                 files.forEach( file => {
                                   trello.addAttachmentToCard(trelloCard.id, req.protocol + '://' + req.get('host') + '/uploads/' + file.filename, function (error, attachment) {
                                       if (error) {
-                                        return res.end('Could not add attachment');
                                         console.log('Could not add attachment', error);
+                                        res.writeHead(500, {'Content-Type': 'text/plain'});
+                                        return res.end('Could not add attachment');
                                       }
                                   });
                                 });
 
                                 trello.updateCard(trelloCard.id, "idAttachmentCover","",function(error, card){
                                   if(error){
-                                    res.end('Could not set cover');
                                     console.log('Could not set cover');
+                                    res.writeHead(500, {'Content-Type': 'text/plain'});
+                                    return res.end('Could not set cover');
                                   }
                                 });
                                 if(desc.length<1)
                                   trello.addCommentToCard(trelloCard.id, comment, function(error, card){
                                     if(error){
                                       console.log(error);
+                                      res.writeHead(500, {'Content-Type': 'text/plain'});
                                       return res.end('Error!');
                                     }else{
                                       console.log('Data was uploaded!');
@@ -131,7 +135,13 @@ app.post('/uploadData',function(req,res){
                     }else{
                       if(desc.length<1){
                         trello.addCommentToCard(cardName, comment, function(error, card){
-                          return res.end("Comment was added!");
+                          if(error){
+                            res.writeHead(500, {'Content-Type': 'text/plain'});
+                            return res.end("Error!");
+                          }else{
+                            res.writeHead(200, {'Content-Type': 'text/plain'});
+                            return res.end("Comment was added!");
+                          }
                         });
                         files.forEach( file => {
                           trello.addAttachmentToCard(cardName, req.protocol + '://' + req.get('host') + '/uploads/' + file.filename, function (error, attachment) {
@@ -144,11 +154,13 @@ app.post('/uploadData',function(req,res){
                         trello.updateCardDescription(cardName, desc, function(error, trelloCard){
                           if(error){
                             console.log('Could not update card\'s description', error);
+                            res.writeHead(500, {'Content-Type': 'text/plain'});
                             return res.end('Could not update card\'s description');
                           }else{
                             files.forEach( file => {
                               trello.addAttachmentToCard(trelloCard.id, req.protocol + '://' + req.get('host') + '/uploads/' + file.filename, function (error, attachment) {
                                   if (error) {
+                                    res.writeHead(500, {'Content-Type': 'text/plain'});
                                     return res.end('Could not add attachment');
                                     console.log('Could not add attachment', error);
                                   }
@@ -156,11 +168,13 @@ app.post('/uploadData',function(req,res){
                             });
                             trello.updateCard(trelloCard.id, "idAttachmentCover","",function(error, card){
                               if(error){
-                                res.end('Could not set cover');
                                 console.log('Could not set cover');
+                                res.writeHead(500, {'Content-Type': 'text/plain'});
+                                res.end('Could not set cover');
                               }else{
-                                res.end('Data was uploaded!');
                                 console.log('Data was uploaded!');
+                                res.writeHead(200, {'Content-Type': 'text/plain'});
+                                return res.end('Data was uploaded!');
                               }
                             });
                           }
@@ -169,12 +183,14 @@ app.post('/uploadData',function(req,res){
                     }
                   }else{
                     console.log('Could not find list', error);
+                    res.writeHead(500, {'Content-Type': 'text/plain'});
                     return res.end('Could not find list');
                   }
                 }
               });
             }else{
               console.log('Could not find board', error);
+              res.writeHead(500, {'Content-Type': 'text/plain'});
               return res.end('Could not find board');
             }
           }
@@ -194,8 +210,6 @@ app.get('/getBoards',function(req,res){
   var trello = new Trello(devAPIkey, token);
 
   var resultArray = [];
-
-  res.writeHead(500, {'Content-Type': 'application/json; charset=utf-8'});
 
   trello.makeRequest('get','/1/members/me',{boards: 'all', board_fields: 'name,memberships', board_memberships: 'all', board_lists: 'all', cards: 'all'}).then((result) =>{
     var st = result.boards.length;
@@ -233,7 +247,7 @@ app.get('/getBoards',function(req,res){
         st--;
         if(st==0){
           res.writeHead(200, {'Content-Type': 'application/json; charset=utf-8'});
-          res.end(JSON.stringify(resultArray));
+          return res.end(JSON.stringify(resultArray));
         }
       });
     });
