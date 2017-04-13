@@ -116,10 +116,10 @@ app.post('/uploadData',function(req,res){
                                     console.log('Data was uploaded!');
                                   }
                                 });
-                                if(desc == '')
+                                /*if(desc == '')
                                   trello.addCommentToCard(cardId, comment, function(error, card){
                                     return res.end("Comment was added!");
-                                  });
+                                  });*/
                               }
                             });
                     }else{
