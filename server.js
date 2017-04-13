@@ -111,15 +111,13 @@ app.post('/uploadData',function(req,res){
                                   if(error){
                                     res.end('Could not set cover');
                                     console.log('Could not set cover');
-                                  }else{
-                                    res.end('Data was uploaded!');
-                                    console.log('Data was uploaded!');
                                   }
                                 });
-                                /*if(desc == '')
-                                  trello.addCommentToCard(cardId, comment, function(error, card){
-                                    return res.end("Comment was added!");
-                                  });*/
+                                if(desc == '')
+                                  trello.addCommentToCard(trelloCard.id, comment, function(error, card){
+                                    console.log('Data was uploaded!');
+                                    return res.end('Data was uploaded!');
+                                  });
                               }
                             });
                     }else{
