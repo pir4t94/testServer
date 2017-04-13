@@ -113,7 +113,7 @@ app.post('/uploadData',function(req,res){
                                     console.log('Could not set cover');
                                   }
                                 });
-                                if(desc == '')
+                                if(desc.length<1)
                                   trello.addCommentToCard(trelloCard.id, comment, function(error, card){
                                     console.log('Data was uploaded!desc:'+desc+'|');
                                     return res.end('Data was uploaded!');
