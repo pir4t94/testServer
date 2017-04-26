@@ -59,6 +59,7 @@ app.post('/uploadData',function(req,res){
         var desc = req.body.desc;
         var comment = req.body.comment;
         var mem = req.body.members;
+        var lbls = req.body.labels;
 
         var trello = new Trello(devAPIkey, token);
 
@@ -71,6 +72,7 @@ app.post('/uploadData',function(req,res){
         res.end('Data was uploaded!');
 
         var members = [];
+        var labels = [];
 
         if(mem.length>10){
           if(mem.length>25){
@@ -78,6 +80,15 @@ app.post('/uploadData',function(req,res){
           }
           else{
             members.push(mem);
+          }
+        }
+
+        if(lbls.length>10){
+          if(lbls.length>25){
+            labels = lbls.split(',');
+          }
+          else{
+            labels.push(lbls);
           }
         }
 
@@ -114,6 +125,13 @@ app.post('/uploadData',function(req,res){
                         }
                       });
                     });
+                    labels.forEach(label => {
+                      trello.addLabelToCard(trelloCard.id, label, function(error, card){
+                        if(error){
+                          console.log('Could not add label to card', error);
+                        }
+                      });
+                    });
                   }
                 });
         }else{
@@ -127,6 +145,13 @@ app.post('/uploadData',function(req,res){
               trello.addMemberToCard(cardId, member, function(error, member){
                 if(error){
                   console.log('Could not add member to card', error);
+                }
+              });
+            });
+            labels.forEach(label => {
+              trello.addLabelToCard(trelloCard.id, label, function(error, card){
+                if(error){
+                  console.log('Could not add label to card', error);
                 }
               });
             });
@@ -158,6 +183,13 @@ app.post('/uploadData',function(req,res){
                   trello.addMemberToCard(trelloCard.id, member, function(error, member){
                     if(error){
                       console.log('Could not add member to card', error);
+                    }
+                  });
+                });
+                labels.forEach(label => {
+                  trello.addLabelToCard(trelloCard.id, label, function(error, card){
+                    if(error){
+                      console.log('Could not add label to card', error);
                     }
                   });
                 });
@@ -217,8 +249,20 @@ app.get('/getBoards',function(req,res){
   var trello = new Trello(devAPIkey, token);
 
   trello.makeRequest('get','/1/members/me',{boards: 'all', board_fields: 'name'}).then((result) =>{
-    res.writeHead(200, {'Content-Type': 'application/json; charset=utf-8'});
-    return res.end(JSON.stringify(result.boards));
+    var st = result.boards.length;
+    result.boards.forEach(board => {
+      trello.makeRequest('get','/1/boards' + '/' + board.id,{labels: 'all', label_fields:'color,name'}).then((result2) =>{
+        result.boards.forEach(board => {
+          if(board.id == result2.id){
+            board.labels = result2.labels;
+          }
+        });
+        if(st-- == 1){
+          res.writeHead(200, {'Content-Type': 'application/json; charset=utf-8'});
+          return res.end(JSON.stringify(result.boards));
+        }
+      });
+    });
   });
 });
 
@@ -254,7 +298,7 @@ app.get('/getCards',function(req,res){
 
   var trello = new Trello(devAPIkey, token);
 
-  trello.makeRequest('get','/1/lists/' + listId + '/cards',{fields:'name,desc,boardId,idMembers'}).then((cards) =>{
+  trello.makeRequest('get','/1/lists/' + listId + '/cards',{fields:'name,desc,boardId,idMembers,idLabels'}).then((cards) =>{
     res.writeHead(200, {'Content-Type': 'application/json; charset=utf-8'});
     return res.end(JSON.stringify(cards));
   });
