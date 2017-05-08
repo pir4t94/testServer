@@ -60,6 +60,8 @@ app.post('/uploadData',function(req,res){
         var comment = req.body.comment;
         var mem = req.body.members;
         var lbls = req.body.labels;
+        var checkListName = req.body.checkListName;
+        var checkListItms = req.body.checkListItms;
 
         var trello = new Trello(devAPIkey, token);
 
@@ -73,7 +75,9 @@ app.post('/uploadData',function(req,res){
 
         var members = [];
         var labels = [];
+        var items = [];
 
+if(mem!=null){
         if(mem.length>10){
           if(mem.length>25){
             members = mem.split(',');
@@ -81,8 +85,8 @@ app.post('/uploadData',function(req,res){
           else{
             members.push(mem);
           }
-        }
-
+        }}
+if(lbls!=null){
         if(lbls.length>10){
           if(lbls.length>25){
             labels = lbls.split(',');
@@ -90,7 +94,15 @@ app.post('/uploadData',function(req,res){
           else{
             labels.push(lbls);
           }
-        }
+        }}
+if(checkListItms!=null){
+        if(checkListItms.length>0){
+          if(checkListItms.split(',').length>1){
+            items = checkListItms.split(',');
+          }else{
+            items.push(checkListItms);
+          }
+        }}
 
         if(newCard == 'true'){
           trello.addCard(cardId, description, listId,
@@ -132,19 +144,35 @@ app.post('/uploadData',function(req,res){
                         }
                       });
                     });
+                    if(checkListName.length > 0){
+                      trello.addChecklistToCard(trelloCard.id, checkListName, function(error, cl){
+                        if(error){
+                          console.log('Could not add checklist', error);
+                        }else{
+                          items.forEach(item => {
+                            trello.addItemToChecklist(cl.id, item, 'bottom', function(error, cl2){
+                              if(error){
+                                console.log('Could not add item to checklist', error);
+                              }
+                            });
+                          });
+                        }
+                      });
+                    }
                   }
                 });
         }else{
+          if(desc!=null){
           if(desc.length<1){
             trello.addCommentToCard(cardId, comment, function(error, card){
               if(error){
                 console.log('Could not add comment to card', error)
               }
             });
-            trello.makeRequest('put','/1/cards/' + trelloCard.id + '/idMembers',{value: members.join(',')}).then((result) =>{
+            trello.makeRequest('put','/1/cards/' + cardId + '/idMembers',{value: members.join(',')}).then((result) =>{
             });
             labels.forEach(label => {
-              trello.makeRequest('put','/1/cards/' + trelloCard.id,{idLabels: labels.join(',')}).then((result) =>{
+              trello.makeRequest('put','/1/cards/' + cardId,{idLabels: labels.join(',')}).then((result) =>{
               });
             });
             files.forEach( file => {
@@ -154,6 +182,21 @@ app.post('/uploadData',function(req,res){
                   }
               });
             });
+            if(checkListName.length > 0){
+              trello.addChecklistToCard(cardId, checkListName, function(error, cl){
+                if(error){
+                  console.log('Could not add checklist', error);
+                }else{
+                  items.forEach(item => {
+                    trello.addItemToChecklist(cl.id, item, 'bottom', function(error, ccl2){
+                      if(error){
+                        console.log('Could not add item to checklist', error);
+                      }
+                    });
+                  });
+                }
+              });
+            }
           }else{
             trello.updateCardDescription(cardId, desc, function(error, trelloCard){
               if(error){
@@ -177,9 +220,24 @@ app.post('/uploadData',function(req,res){
                   trello.makeRequest('put','/1/cards/' + trelloCard.id,{idLabels: labels.join(',')}).then((result) =>{
                   });
                 });
+                if(checkListName.length > 0){
+                  trello.addChecklistToCard(trelloCard.id, checkListName, function(error, cl){
+                    if(error){
+                      console.log('Could not add checklist', error);
+                    }else{
+                      items.forEach(item => {
+                        trello.addItemToChecklist(cl.id, item, 'bottom', function(error, ccl2){
+                          if(error){
+                            console.log('Could not add item to checklist', error);
+                          }
+                        });
+                      });
+                    }
+                  });
+                }
               }
             });
-          }
+          }}
         }
       }
     });
