@@ -62,7 +62,15 @@ app.post('/uploadData',function(req,res){
         var lbls = req.body.labels;
         /*var checkListName = req.body.checkListName;
         var checkListItms = req.body.checkListItms;*/
-        var checklists = JSON.parse(req.body.checklists);
+
+        var checklists;
+
+        try{
+          checklists = JSON.parse(req.body.checklists);
+        }catch(){
+          checklists = [];
+        }
+
 
         var trello = new Trello(devAPIkey, token);
 
