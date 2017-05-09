@@ -60,8 +60,9 @@ app.post('/uploadData',function(req,res){
         var comment = req.body.comment;
         var mem = req.body.members;
         var lbls = req.body.labels;
-        var checkListName = req.body.checkListName;
-        var checkListItms = req.body.checkListItms;
+        /*var checkListName = req.body.checkListName;
+        var checkListItms = req.body.checkListItms;*/
+        var checklists = JSON.parse(req.body.checklists);
 
         var trello = new Trello(devAPIkey, token);
 
@@ -75,34 +76,36 @@ app.post('/uploadData',function(req,res){
 
         var members = [];
         var labels = [];
-        var items = [];
+        //var items = [];
 
-if(mem!=null){
-        if(mem.length>10){
-          if(mem.length>25){
-            members = mem.split(',');
+        if(mem!=null){
+          if(mem.length>10){
+            if(mem.length>25){
+              members = mem.split(',');
+            }
+            else{
+              members.push(mem);
+            }
           }
-          else{
-            members.push(mem);
+        }
+        if(lbls!=null){
+          if(lbls.length>10){
+            if(lbls.length>25){
+              labels = lbls.split(',');
+            }
+            else{
+              labels.push(lbls);
+            }
           }
-        }}
-if(lbls!=null){
-        if(lbls.length>10){
-          if(lbls.length>25){
-            labels = lbls.split(',');
-          }
-          else{
-            labels.push(lbls);
-          }
-        }}
-if(checkListItms!=null){
+        }
+/*if(checkListItms!=null){
         if(checkListItms.length>0){
           if(checkListItms.split(',').length>1){
             items = checkListItms.split(',');
           }else{
             items.push(checkListItms);
           }
-        }}
+        }}*/
 
         if(newCard == 'true'){
           trello.addCard(cardId, description, listId,
@@ -144,21 +147,19 @@ if(checkListItms!=null){
                         }
                       });
                     });
-                    if(checkListName.length > 0){
-                      trello.addChecklistToCard(trelloCard.id, checkListName, function(error, cl){
+                    checklists.forEach(checklist =>{
+                      trello.addChecklistToCard(trelloCard.id, checklist.name, function(error, cl){
                         if(error){
                           console.log('Could not add checklist', error);
                         }else{
+                          var items = checklist.items;
                           items.forEach(item => {
-                            trello.addItemToChecklist(cl.id, item, 'bottom', function(error, cl2){
-                              if(error){
-                                console.log('Could not add item to checklist', error);
-                              }
+                            trello.makeRequest('post','/1/checklists/' + cl.id + '/checkitems',{name:item.name,checked:item.state}).then((result) =>{
                             });
                           });
                         }
                       });
-                    }
+                    });
                   }
                 });
         }else{
@@ -182,21 +183,32 @@ if(checkListItms!=null){
                   }
               });
             });
-            if(checkListName.length > 0){
-              trello.addChecklistToCard(cardId, checkListName, function(error, cl){
-                if(error){
-                  console.log('Could not add checklist', error);
-                }else{
-                  items.forEach(item => {
-                    trello.addItemToChecklist(cl.id, item, 'bottom', function(error, ccl2){
-                      if(error){
-                        console.log('Could not add item to checklist', error);
-                      }
+            checklists.forEach(checklist =>{
+              if(checklist.id.length < 1){
+                trello.addChecklistToCard(cardId, checklist.name, function(error, cl){
+                  if(error){
+                    console.log('Could not add checklist', error);
+                  }else{
+                    var items = checklist.items;
+                    items.forEach(item => {
+                      trello.makeRequest('post','/1/checklists/' + cl.id + '/checkitems',{name:item.name,checked:item.state}).then((result) =>{
+                      });
                     });
-                  });
-                }
-              });
-            }
+                  }
+                });
+              }else{
+                var items = checklist.items;
+                items.forEach(item => {
+                  if(item.id.length < 1){
+                    trello.makeRequest('post','/1/checklists/' + cl.id + '/checkitems',{name:item.name,checked:item.state}).then((result) =>{
+                    });
+                  }else{
+                    trello.makeRequest('put','/1/cards/' + cardId + '/checklist/' + cl.id + '/checkItem/' + item.id,{state:item.state}).then((result) =>{
+                    });
+                  }
+                });
+              }
+            });
           }else{
             trello.updateCardDescription(cardId, desc, function(error, trelloCard){
               if(error){
@@ -220,21 +232,32 @@ if(checkListItms!=null){
                   trello.makeRequest('put','/1/cards/' + trelloCard.id,{idLabels: labels.join(',')}).then((result) =>{
                   });
                 });
-                if(checkListName.length > 0){
-                  trello.addChecklistToCard(trelloCard.id, checkListName, function(error, cl){
-                    if(error){
-                      console.log('Could not add checklist', error);
-                    }else{
-                      items.forEach(item => {
-                        trello.addItemToChecklist(cl.id, item, 'bottom', function(error, ccl2){
-                          if(error){
-                            console.log('Could not add item to checklist', error);
-                          }
+                checklists.forEach(checklist =>{
+                  if(checklist.id.length < 1){
+                    trello.addChecklistToCard(cardId, checklist.name, function(error, cl){
+                      if(error){
+                        console.log('Could not add checklist', error);
+                      }else{
+                        var items = checklist.items;
+                        items.forEach(item => {
+                          trello.makeRequest('post','/1/checklists/' + cl.id + '/checkitems',{name:item.name,checked:item.state}).then((result) =>{
+                          });
                         });
-                      });
-                    }
-                  });
-                }
+                      }
+                    });
+                  }else{
+                    var items = checklist.items;
+                    items.forEach(item => {
+                      if(item.id.length < 1){
+                        trello.makeRequest('post','/1/checklists/' + checklist.id + '/checkitems',{name:item.name,checked:item.state}).then((result) =>{
+                        });
+                      }else{
+                        trello.makeRequest('put','/1/cards/' + cardId + '/checklist/' + checklist.id + '/checkItem/' + item.id,{state:item.state}).then((result) =>{
+                        });
+                      }
+                    });
+                  }
+                });
               }
             });
           }}
@@ -306,6 +329,25 @@ app.get('/getCards',function(req,res){
   var trello = new Trello(devAPIkey, token);
 
   trello.makeRequest('get','/1/lists/' + listId + '/cards',{fields:'name,desc,boardId,idMembers,idLabels'}).then((cards) =>{
+    res.writeHead(200, {'Content-Type': 'application/json; charset=utf-8'});
+    return res.end(JSON.stringify(cards));
+  });
+});
+
+app.get('/getChecklists',function(req,res){
+  console.log('Getting checklists...');
+
+  var token = req.query.token;
+  var cardId = req.query.cardId;
+
+  if(token == null){
+    res.writeHead(500, {'Content-Type': 'application/json; charset=utf-8'});
+    return res.end('No token');
+  }
+
+  var trello = new Trello(devAPIkey, token);
+
+  trello.makeRequest('get','/1/cards/' + cardId + '/checklists',{card_fields:'',checkItem_fields:'name,state',fields:'idCard,name'}).then((cards) =>{
     res.writeHead(200, {'Content-Type': 'application/json; charset=utf-8'});
     return res.end(JSON.stringify(cards));
   });
