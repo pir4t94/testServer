@@ -208,10 +208,10 @@ app.post('/uploadData',function(req,res){
                 var items = checklist.items;
                 items.forEach(item => {
                   if(item.id.length < 1){
-                    trello.makeRequest('post','/1/checklists/' + cl.id + '/checkitems',{name:item.name,checked:item.state}).then((result) =>{
+                    trello.makeRequest('post','/1/checklists/' + checklist.id + '/checkitems',{name:item.name,checked:item.state}).then((result) =>{
                     });
                   }else{
-                    trello.makeRequest('put','/1/cards/' + cardId + '/checklist/' + cl.id + '/checkItem/' + item.id,{state:item.state}).then((result) =>{
+                    trello.makeRequest('put','/1/cards/' + cardId + '/checklist/' + checklist.id + '/checkItem/' + item.id,{state:item.state}).then((result) =>{
                     });
                   }
                 });
