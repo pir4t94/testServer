@@ -67,7 +67,7 @@ app.post('/uploadData',function(req,res){
 
         try{
           checklists = JSON.parse(req.body.checklists);
-        }catch(){
+        }catch(error){
           checklists = [];
         }
 
