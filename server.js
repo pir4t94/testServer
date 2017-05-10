@@ -287,20 +287,25 @@ app.get('/getBoards',function(req,res){
   var trello = new Trello(devAPIkey, token);
 
   trello.makeRequest('get','/1/members/me',{boards: 'all', board_fields: 'name'}).then((result) =>{
-    var st = result.boards.length;
-    result.boards.forEach(board => {
-      trello.makeRequest('get','/1/boards' + '/' + board.id,{labels: 'all', label_fields:'color,name'}).then((result2) =>{
-        result.boards.forEach(board => {
-          if(board.id == result2.id){
-            board.labels = result2.labels;
+    if(!result.toString().includes('invalid token')){
+      var st = result.boards.length;
+      result.boards.forEach(board => {
+        trello.makeRequest('get','/1/boards' + '/' + board.id,{labels: 'all', label_fields:'color,name'}).then((result2) =>{
+          result.boards.forEach(board => {
+            if(board.id == result2.id){
+              board.labels = result2.labels;
+            }
+          });
+          if(st-- == 1){
+            res.writeHead(200, {'Content-Type': 'application/json; charset=utf-8'});
+            return res.end(JSON.stringify(result.boards));
           }
         });
-        if(st-- == 1){
-          res.writeHead(200, {'Content-Type': 'application/json; charset=utf-8'});
-          return res.end(JSON.stringify(result.boards));
-        }
       });
-    });
+    }else{
+      res.writeHead(500, {'Content-Type': 'application/json; charset=utf-8'});
+      return res.end(result);
+    }
   });
 });
 
