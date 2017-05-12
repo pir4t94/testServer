@@ -60,8 +60,6 @@ app.post('/uploadData',function(req,res){
         var comment = req.body.comment;
         var mem = req.body.members;
         var lbls = req.body.labels;
-        /*var checkListName = req.body.checkListName;
-        var checkListItms = req.body.checkListItms;*/
 
         var checklists;
 
@@ -73,8 +71,13 @@ app.post('/uploadData',function(req,res){
 
 
         var trello = new Trello(devAPIkey, token);
+        var description;
 
-        var description = 'OS: ' + os + '\nDevice: ' + device + '\nTime: ' + time + '\n\n' + desc;
+        if(!desc.includes('OS:')){
+          description = 'OS: ' + os + '\nDevice: ' + device + '\nTime: ' + time + '\n\n' + desc;
+        }else{
+          description = desc;
+        }
 
         var files = req.files;
 
@@ -106,14 +109,6 @@ app.post('/uploadData',function(req,res){
             }
           }
         }
-/*if(checkListItms!=null){
-        if(checkListItms.length>0){
-          if(checkListItms.split(',').length>1){
-            items = checkListItms.split(',');
-          }else{
-            items.push(checkListItms);
-          }
-        }}*/
 
         if(newCard == 'true'){
           trello.addCard(cardId, description, listId,
@@ -135,7 +130,7 @@ app.post('/uploadData',function(req,res){
                         console.log('Could not set cover',error);
                       }
                     });
-                    if(desc.length<1)
+                    if(comment.length>0)
                       trello.addCommentToCard(trelloCard.id, comment, function(error, card){
                         if(error){
                           console.log('Could not add attachment',error);
@@ -171,24 +166,28 @@ app.post('/uploadData',function(req,res){
                   }
                 });
         }else{
-          if(desc!=null){
-          if(desc.length<1){
-            trello.addCommentToCard(cardId, comment, function(error, card){
+          if(desc.length>0)
+            trello.updateCardDescription(cardId, desc, function(error, trelloCard){
               if(error){
-                console.log('Could not add comment to card', error)
+                console.log('Could not update card\'s description', error);
               }
-            });
-            trello.makeRequest('put','/1/cards/' + cardId + '/idMembers',{value: members.join(',')}).then((result) =>{
-            });
-            labels.forEach(label => {
-              trello.makeRequest('put','/1/cards/' + cardId,{idLabels: labels.join(',')}).then((result) =>{
-              });
             });
             files.forEach( file => {
               trello.addAttachmentToCard(cardId, req.protocol + '://' + req.get('host') + '/uploads/' + file.filename, function (error, attachment) {
                   if (error) {
                     console.log('Could not add attachment', error);
                   }
+              });
+            });
+            trello.updateCard(cardId, "idAttachmentCover","",function(error, card){
+              if(error){
+                console.log('Could not set cover', error);
+              }
+            });
+            trello.makeRequest('put','/1/cards/' + cardId + '/idMembers',{value: members.join(',')}).then((result) =>{
+            });
+            labels.forEach(label => {
+              trello.makeRequest('put','/1/cards/' + cardId,{idLabels: labels.join(',')}).then((result) =>{
               });
             });
             checklists.forEach(checklist =>{
@@ -217,58 +216,12 @@ app.post('/uploadData',function(req,res){
                 });
               }
             });
-          }else{
-            trello.updateCardDescription(cardId, desc, function(error, trelloCard){
-              if(error){
-                console.log('Could not update card\'s description', error);
-              }else{
-                files.forEach( file => {
-                  trello.addAttachmentToCard(trelloCard.id, req.protocol + '://' + req.get('host') + '/uploads/' + file.filename, function (error, attachment) {
-                      if (error) {
-                        console.log('Could not add attachment', error);
-                      }
-                  });
-                });
-                trello.updateCard(trelloCard.id, "idAttachmentCover","",function(error, card){
-                  if(error){
-                    console.log('Could not set cover', error);
-                  }
-                });
-                trello.makeRequest('put','/1/cards/' + trelloCard.id + '/idMembers',{value: members.join(',')}).then((result) =>{
-                });
-                labels.forEach(label => {
-                  trello.makeRequest('put','/1/cards/' + trelloCard.id,{idLabels: labels.join(',')}).then((result) =>{
-                  });
-                });
-                checklists.forEach(checklist =>{
-                  if(checklist.id.length < 1){
-                    trello.addChecklistToCard(cardId, checklist.name, function(error, cl){
-                      if(error){
-                        console.log('Could not add checklist', error);
-                      }else{
-                        var items = checklist.items;
-                        items.forEach(item => {
-                          trello.makeRequest('post','/1/checklists/' + cl.id + '/checkitems',{name:item.name,checked:item.state}).then((result) =>{
-                          });
-                        });
-                      }
-                    });
-                  }else{
-                    var items = checklist.items;
-                    items.forEach(item => {
-                      if(item.id.length < 1){
-                        trello.makeRequest('post','/1/checklists/' + checklist.id + '/checkitems',{name:item.name,checked:item.state}).then((result) =>{
-                        });
-                      }else{
-                        trello.makeRequest('put','/1/cards/' + cardId + '/checklist/' + checklist.id + '/checkItem/' + item.id,{state:item.state}).then((result) =>{
-                        });
-                      }
-                    });
-                  }
-                });
-              }
-            });
-          }}
+            if(comment.length>0)
+              trello.addCommentToCard(cardId, comment, function(error, card){
+                if(error){
+                  console.log('Could not add comment to card', error)
+                }
+              });
         }
       }
     });
