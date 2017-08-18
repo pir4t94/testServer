@@ -155,8 +155,8 @@ app.post('/uploadData',function(req,res){
                         if(error){
                           console.log('Could not add checklist', error);
                         }else{
-                          var items = checklist.items;
-                          items.forEach(item => {
+                          var checkItems = checklist.checkItems;
+                          checkItems.forEach(item => {
                             trello.makeRequest('post','/1/checklists/' + cl.id + '/checkitems',{name:item.name,checked:item.state}).then((result) =>{
                             });
                           });
@@ -196,21 +196,20 @@ app.post('/uploadData',function(req,res){
                   if(error){
                     console.log('Could not add checklist', error);
                   }else{
-                    var items = checklist.items;
-                    items.forEach(item => {
+                    var checkItems = checklist.checkItems;
+                    checkItems.forEach(item => {
                       trello.makeRequest('post','/1/checklists/' + cl.id + '/checkitems',{name:item.name,checked:item.state}).then((result) =>{
                       });
                     });
                   }
                 });
               }else{
-                var items = checklist.items;
-                items.forEach(item => {
-                  if(item.id.length < 1){
-                    trello.makeRequest('post','/1/checklists/' + checklist.id + '/checkitems',{name:item.name,checked:item.state}).then((result) =>{
+                checklists.forEach(checkItems => {
+                  if(checkItems.id.length < 1){
+                    trello.makeRequest('post','/1/checklists/' + checkItems.id + '/items',{name:checkItems.name,checked:checkItems.state}).then((result) =>{
                     });
                   }else{
-                    trello.makeRequest('put','/1/cards/' + cardId + '/checklist/' + checklist.id + '/checkItem/' + item.id,{state:item.state}).then((result) =>{
+                    trello.makeRequest('put','/1/cards/' + cardId + '/checklist/' + checklist.id + '/checkItem/' + checkItems.id,{state:checkItems.state}).then((result) =>{
                     });
                   }
                 });
